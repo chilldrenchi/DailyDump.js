@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PooPee.js</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        :root { --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
+        body { font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); display: flex; justify-content: center; padding: 20px; }
+        .card { background: var(--card); padding: 25px; border-radius: 24px; width: 350px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.3); border: 1px solid #334155; text-align: center; }
+        h2 { margin: 0 0 20px 0; font-weight: 800; letter-spacing: -1px; }
+        .btn-group { display: flex; justify-content: center; gap: 12px; margin-bottom: 20px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; cursor: pointer; color: white; font-weight: 600; transition: transform 0.1s; }
+        .btn:active { transform: scale(0.95); }
+        .log-section { height: 60px; overflow-y: auto; background: #0f172a; border-radius: 12px; padding: 10px; margin-bottom: 20px; font-size: 12px; text-align: left; }
+        .log-item { display: flex; justify-content: space-between; padding: 3px 0; border-bottom: 1px solid #334155; }
+        .chart-container { height: 160px; }
+        .clear-btn { background: none; border: none; color: #64748b; cursor: pointer; font-size: 10px; margin-top: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>PooPee.js</h2>
+    <div class="btn-group">
+        <button id="btn-pee" class="btn" style="background:#38bdf8">Pee 💧</button>
+        <button id="btn-poop" class="btn" style="background:#fb923c">Poop 💩</button>
+    </div>
+
+    <div id="history-list" class="log-section"></div>
+
+    <div class="chart-container">
+        <canvas id="myChart"></canvas>
+    </div>
+    
+    <button id="btn-clear" class="clear-btn">Clear History</button>
+</div>
+
+<script>
+    Chart.register(ChartDataLabels);
+    let myChart;
+
+    function addRecord(type) {
+        let logs = JSON.parse(localStorage.getItem('poopee_logs')) || [];
+        logs.push({ 
+            date: new Date().toISOString().slice(5, 10), 
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), 
+            type: type 
+        });
+        localStorage.setItem('poopee_logs', JSON.stringify(logs));
+        render();
+    }
+
+    function render() {
+        let logs = JSON.parse(localStorage.getItem('poopee_logs')) || [];
+        document.getElementById('history-list').innerHTML = logs.slice().reverse().map(l => 
+            `<div class="log-item"><span>${l.date} ${l.time}</span><span>${l.type === 'pee' ? '💧 Pee' : '💩 Poop'}</span></div>`
+        ).join('');
+
+        let dates = [...new Set(logs.map(l => l.date))].slice(-7);
+        let peeData = dates.map(d => logs.filter(l => l.date === d && l.type === 'pee').length);
+        let poopData = dates.map(d => logs.filter(l => l.date === d && l.type === 'poop').length);
+
+        if (!myChart) {
+            myChart = new Chart(document.getElementById('myChart'), {
+                type: 'line',
+                data: { labels: dates, datasets: [
+                    { label: 'Pee', data: peeData, borderColor: '#38bdf8', datalabels: {color: '#38bdf8'} },
+                    { label: 'Poop', data: poopData, borderColor: '#fb923c', datalabels: {color: '#fb923c'} }
+                ]},
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    layout: { padding: { top: 30 } },
+                    plugins: { 
+                        legend: { display: false }, 
+                        datalabels: { anchor: 'end', align: 'top', font: { weight: 'bold', size: 12 } } 
+                    },
+                    scales: { x: { ticks: { color: '#64748b', font: { size: 10 } } }, y: { display: false } }
+                }
+            });
+        } else {
+            myChart.data.labels = dates;
+            myChart.data.datasets[0].data = peeData;
+            myChart.data.datasets[1].data = poopData;
+            myChart.update();
+        }
+    }
+
+    document.getElementById('btn-pee').addEventListener('click', () => addRecord('pee'));
+    document.getElementById('btn-poop').addEventListener('click', () => addRecord('poop'));
+    document.getElementById('btn-clear').addEventListener('click', () => { localStorage.removeItem('poopee_logs'); location.reload(); });
+    render();
+</script>
+</body>
+</html>
