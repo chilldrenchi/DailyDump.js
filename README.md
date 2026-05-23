@@ -1,4 +1,8 @@
 # DailyDump.js 💩
+## 🌐 Live Demo
+
+You can try out the live version of this project directly in your browser:
+👉 [Launch DailyDump.js](https://chilldrenchi.github.io/DailyDump.js/)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
